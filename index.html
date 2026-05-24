@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Loteca PRO Automatizada</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: #e2e8f0;
+    min-height: 100vh;
+    padding: 20px;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  h1 { font-size: 2rem; background: linear-gradient(90deg, #38bdf8, #818cf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 8px; }
+  .subtitle { color: #94a3b8; font-size: 0.9rem; }
+  
+  .input-section {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 25px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+  textarea {
+    width: 100%;
+    height: 200px;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid rgba(255,255,255,0.2);
+    border-radius: 12px;
+    padding: 15px;
+    color: #e2e8f0;
+    font-family: monospace;
+    font-size: 14px;
+    resize: vertical;
+  }
+  button {
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    color: white;
+    border: none;
+    padding: 14px 32px;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 15px;
+    font-size: 16px;
+    transition: transform 0.2s;
+  }
+  button:hover { transform: translateY(-2px); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  
+  .loading { display: none; text-align: center; padding: 40px; }
+  .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-top-color: #38bdf8; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 15px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  
+  .results { display: none; }
+  .score-card {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+  .score-item {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    text-align: center;
+  }
+  .score-label { font-size: 0.8rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
+  .score-value { font-size: 1.8rem; font-weight: 700; margin-top: 5px; }
+  .tipo-A { color: #22c55e; } .tipo-B { color: #eab308; } .tipo-C { color: #f97316; } .tipo-D { color: #ef4444; }
+  
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 15px;
+    margin-bottom: 25px;
+  }
+  .game-card {
+    background: rgba(255,255,255,0.05);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    padding: 18px;
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: transform 0.2s;
+  }
+  .game-card:hover { transform: translateY(-3px); border-color: rgba(56,189,248,0.5); }
+  .game-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .game-num { background: rgba(56,189,248,0.2); color: #38bdf8; padding: 4px 10px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; }
+  .palpite { font-size: 1.4rem; font-weight: 700; color: #818cf8; }
+  .game-teams { font-weight: 600; margin-bottom: 10px; font-size: 0.95rem; }
+  .odds { display: flex; gap: 10px; font-size: 0.85rem; color: #94a3b8; }
+  .odd-item { background: rgba(0,0,0,0.3); padding: 4px 8px; border-radius: 6px; }
+  .motivo { margin-top: 10px; font-size: 0.8rem; color: #cbd5e1; line-height: 1.4; }
+  
+  .copy-section { text-align: center; margin-top: 30px; }
+  .volante {
+    background: rgba(0,0,0,0.4);
+    padding: 20px;
+    border-radius: 12px;
+    font-family: monospace;
+    font-size: 1.1rem;
+    letter-spacing: 2px;
+    margin: 15px 0;
+    border: 1px solid rgba(255,255,255,0.1);
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>LOTECA PRO</h1>
+    <p class="subtitle">Automatizada com IA • Validação em tempo real</p>
+  </header>
+
+  <div class="input-section">
+    <h3 style="margin-bottom:15px;">Cole os 14 jogos (um por linha)</h3>
+    <textarea id="jogosInput" placeholder="Flamengo x Palmeiras
+Corinthians x São Paulo
+Grêmio x Internacional
+...">Flamengo x Palmeiras
+Corinthians x São Paulo
+Grêmio x Internacional
+Atlético-MG x Cruzeiro
+Vasco x Botafogo
+Fluminense x Bahia
+Santos x Fortaleza
+Athletico-PR x Coritiba
+Bragantino x Cuiabá
+Goiás x Atlético-GO
+Vitória x Sport
+Ceará x Náutico
+Chapecoense x Avaí
+Ponte Preta x Guarani</textarea>
+    <button id="analisarBtn" onclick="analisar()">BUSCAR ANÁLISE</button>
+  </div>
+
+  <div class="loading" id="loading">
+    <div class="spinner"></div>
+    <p>Buscando odds reais na API-Football...</p>
+    <p style="font-size:0.85rem; color:#94a3b8; margin-top:8px;">Validando → Classificando → Gerando palpites</p>
+  </div>
+
+  <div class="results" id="results">
+    <div class="score-card" id="scoreCard"></div>
+    <div class="games-grid" id="gamesGrid"></div>
+    
+    <div class="copy-section">
+      <h3>Volante Final</h3>
+      <div class="volante" id="volante"></div>
+      <button onclick="copiarVolante()">Copiar volante</button>
+    </div>
+  </div>
+</div>
+
+<script>
+async function analisar() {
+  const input = document.getElementById('jogosInput').value.trim();
+  const jogos = input.split('
+').filter(l => l.trim()).slice(0,14);
+  
+  if (jogos.length !== 14) {
+    alert('Cole exatamente 14 jogos, um por linha');
+    return;
+  }
+
+  document.getElementById('loading').style.display = 'block';
+  document.getElementById('results').style.display = 'none';
+  document.getElementById('analisarBtn').disabled = true;
+
+  try {
+    const res = await fetch('/api/analisar', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({ jogos })
+    });
+    
+    const data = await res.json();
+    
+    if (!res.ok) throw new Error(data.error || 'Erro na API');
+    
+    mostrarResultados(data);
+  } catch (e) {
+    alert('Erro: ' + e.message);
+    console.error(e);
+  } finally {
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('analisarBtn').disabled = false;
+  }
+}
+
+function mostrarResultados(data) {
+  // Score cards
+  const scoreHtml = `
+    <div class="score-item">
+      <div class="score-label">Tipo</div>
+      <div class="score-value tipo-${data.tipo}">${data.tipo}</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">Subtipo</div>
+      <div class="score-value" style="font-size:1.2rem">${data.subtipo}</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">Distribuição</div>
+      <div class="score-value" style="font-size:1.2rem">${data.distribuicao.secos}S ${data.distribuicao.duplos}D ${data.distribuicao.triplos}T</div>
+    </div>
+    <div class="score-item">
+      <div class="score-label">Confiança</div>
+      <div class="score-value" style="font-size:1.2rem">${data.confianca}</div>
+    </div>
+  `;
+  document.getElementById('scoreCard').innerHTML = scoreHtml;
+
+  // Games
+  let gamesHtml = '';
+  data.ficha.forEach((jogo, i) => {
+    const palpite = data.palpites[i] || '-';
+    gamesHtml += `
+      <div class="game-card">
+        <div class="game-header">
+          <span class="game-num">Jogo ${i+1}</span>
+          <span class="palpite">${palpite}</span>
+        </div>
+        <div class="game-teams">${jogo.jogo}</div>
+        <div class="odds">
+          <span class="odd-item">1: ${jogo.odd1 || '-'}</span>
+          <span class="odd-item">X: ${jogo.oddX || '-'}</span>
+          <span class="odd-item">2: ${jogo.odd2 || '-'}</span>
+          <span class="odd-item">${jogo.incerteza}</span>
+        </div>
+        <div class="motivo">${jogo.motivo || ''}</div>
+      </div>
+    `;
+  });
+  document.getElementById('gamesGrid').innerHTML = gamesHtml;
+
+  // Volante
+  document.getElementById('volante').textContent = data.palpites.join(' ');
+  
+  document.getElementById('results').style.display = 'block';
+  window.scrollTo({top: document.getElementById('results').offsetTop - 20, behavior: 'smooth'});
+}
+
+function copiarVolante() {
+  const texto = document.getElementById('volante').textContent;
+  navigator.clipboard.writeText(texto);
+  alert('Volante copiado!');
+}
+</script>
+</body>
+</html>
